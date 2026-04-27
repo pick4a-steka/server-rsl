@@ -1,7 +1,19 @@
-from fastapi import APIRouter
+import json
+import uuid
+import time
+import logging
+
+from fastapi import APIRouter, HTTPException
 
 from app.worker.inference import run_inference
-from app.api.config import Request, Response
+from app.common.redis_client import redis_client
+from app.common.config import (
+    Request, Response,
+    TASK_STREAM_NAME, TASK_GROUP_NAME,
+    RESULT_TTL_SECONDS
+)
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/api",
@@ -10,5 +22,36 @@ router = APIRouter(
 
 @router.post("/recognize")
 async def recognize(item: Request) -> Response:
-    result = run_inference(item)
-    return result
+    task_id = str(uuid.uuid4())
+
+    try:
+        message_id = redis_client.xadd(
+            TASK_STREAM_NAME,
+            {
+                "task_id": task_id,
+                "tensor": json.dumps(item.tensor),
+            },
+            maxlen=1000,
+            approximate=True
+        )
+    except redis.exceptions.RedisError:
+        raise HTTPException(
+            status_code=503,
+            detail="Redis service is unavailable"
+        )
+
+    logger.info(f"Task {task_id} added to stream with message ID {message_id}")
+    result_key = f"recognition_result:{task_id}"
+
+    timeout_sec = 10
+    start_time = time.time()
+
+    while time.time() - start_time < timeout_sec:
+        result_json = redis_client.get(result_key)
+
+        if result_json is not None:
+            redis_client.delete(result_key)
+            return json.loads(result_json)
+        time.sleep(0.05)
+
+    raise HTTPException(status_code=504, detail="Recognition timedout")
