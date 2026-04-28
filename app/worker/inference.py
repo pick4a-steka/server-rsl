@@ -2,9 +2,13 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 from typing import List
+from pathlib import Path
 
 from app.common.gru_model import GRUModel
 from app.common.config import Request, Response, LABELS
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+MODEL_PATH = BASE_DIR / "models" / "model_18042026_210405_10"
 
  # загружаем модель распознавания
 model_gru = GRUModel(
@@ -14,7 +18,7 @@ model_gru = GRUModel(
     num_classes=3
 )
 state_dict = torch.load(
-    "/home/mihal/projects/server-rsl/app/models/model_18042026_210405_10",
+    MODEL_PATH,
     map_location=torch.device('cpu'))
 model_gru.load_state_dict(state_dict)
 model_gru.eval()
