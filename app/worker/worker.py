@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import time
+import socket
 
 import redis
 
@@ -32,7 +33,7 @@ def create_consumer_group():
             raise
 
 def main():
-    consumer_name = os.getenv("WORKER_NAME", f"worker-{os.getpid()}")
+    consumer_name = os.getenv("WORKER_NAME", f"worker-{socket.gethostname()}")
 
     create_consumer_group()
 
@@ -56,7 +57,10 @@ def main():
                     task_id = fields["task_id"]
                     tensor = json.loads(fields["tensor"])
 
-                    logger.info(f"Received task: {task_id}, message_id={message_id}")
+                    logger.info(
+                        f"Worker {consumer_name} received task: {task_id}, "
+                        f"message_id={message_id}"
+                    )
 
                     try:
                         result = run_inference(tensor)
@@ -75,9 +79,10 @@ def main():
                             message_id
                         )
 
-                        logger.info(f"Task completed: {task_id}")
+                        logger.info(f"Worker {consumer_name} completed task: {task_id}")
                     except Exception as e:
-                        logger.exception(f"Task failed: {task_id}, error: {e}")
+                        logger.exception(f"Worker {consumer_name} failed task: {task_id}, error: {e}"
+                        )
 
                         error_result = {
                             "status": False,
@@ -96,7 +101,7 @@ def main():
                             message_id
                         )
         except redis.exceptions.RedisError as e:
-            logger.exception(f"Worker loop error: {e}")
+            logger.exception(f"Worker {consumer_name} loop error: {e}")
             time.sleep(1)
 
 if __name__ == "__main__":

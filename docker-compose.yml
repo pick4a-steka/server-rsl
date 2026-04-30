@@ -22,7 +22,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.worker
-    container_name: rsl-worker
+    # container_name: rsl-worker # Имя контейнера. Не нужно, если воркеров может быть несколько
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
