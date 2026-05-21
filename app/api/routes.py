@@ -20,6 +20,10 @@ router = APIRouter(
     tags=["inference"]
 )
 
+@router.get("/health")
+def health_check():
+    return { "status": "ok" }
+
 @router.post("/recognize")
 async def recognize(item: Request) -> Response:
     task_id = str(uuid.uuid4())
