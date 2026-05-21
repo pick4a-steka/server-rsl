@@ -101,7 +101,7 @@ def main():
                             message_id
                         )
         except redis.exceptions.RedisError as e:
-            logger.exception(f"Worker {consumer_name} loop error: {e}")
+            logger.exception(f"Worker {consumer_name} loop error:-- {e}")
             time.sleep(1)
 
 if __name__ == "__main__":

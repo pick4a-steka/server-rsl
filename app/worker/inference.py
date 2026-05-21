@@ -8,14 +8,14 @@ from app.common.gru_model import GRUModel
 from app.common.config import Request, Response, LABELS
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-MODEL_PATH = BASE_DIR / "models" / "model_18042026_210405_10"
+MODEL_PATH = BASE_DIR / "models" / "model_acc_0.8842794759825328_11052026_130043_35"
 
  # загружаем модель распознавания
 model_gru = GRUModel(
-    input_size=132,
-    hidden_size=128,
+    input_size=162,
+    hidden_size=52,
     num_layers=2,
-    num_classes=3
+    num_classes=20
 )
 state_dict = torch.load(
     MODEL_PATH,

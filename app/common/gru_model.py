@@ -13,22 +13,25 @@ class GRUModel(nn.Module):
             dropout=dropout
         )
 
+        self.attention = nn.Linear(hidden_size, 1)
+
         self.classifier = nn.Sequential(
-            nn.Linear(hidden_size, 64),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(64, 32),
-            nn.ReLU(),
-            nn.Dropout(0.1),
-            nn.Linear(32, num_classes)
+            nn.Dropout(0.15),
+            nn.Linear(hidden_size, num_classes)
         )
-
+        
     def forward(self, x):
-        # x: [batch, 12, 132]
         output, h_n = self.gru(x)
+        # output: [batch, frames, hidden_size]
 
-        # h_n: [1, batch, 128], т.е [количество слоев, количество батчей, размер слоя]
-        last_hidden = h_n[-1]
+        scores = self.attention(output)
+        # scores: [batch, frames, 1]
 
-        logits = self.classifier(last_hidden) # [batch, количество классов]
+        weights = torch.softmax(scores, dim=1)
+        # weights: [batch, frames, 1]
+
+        context = (output * weights).sum(dim=1)
+        # context: [batch, hidden_size]
+
+        logits = self.classifier(context)
         return logits
