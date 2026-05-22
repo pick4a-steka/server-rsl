@@ -29,7 +29,7 @@ async def recognize(item: Request) -> Response:
     task_id = str(uuid.uuid4())
 
     # отладка: сохраняем пришедший большой тензор в лог, чтобы он полностью отображался
-    logger.debug(f"Received tensor for task {task_id}: {json.dumps(item.tensor)})")
+    logger.info(f"Received tensor for task {task_id}: {json.dumps(item.tensor)})")
 
     try:
         message_id = redis_client.xadd(
